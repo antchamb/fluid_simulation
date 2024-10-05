@@ -1,0 +1,18 @@
+* text=auto
+
+*.cs     text
+*.shader text
+*.txt    text
+*.json   text
+*.xml    text
+*.yml    text
+
+*.png    binary
+*.jpg    binary
+*.fbx    binary
+*.unity  binary
+*.prefab binary
+*.mp4    binary
+*.ogg    binary
+*.wav    binary
+*.dll    binary

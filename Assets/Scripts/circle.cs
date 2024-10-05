@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Assertions.Must;
 using UnityEngine.Timeline;
 using static UnityEngine.Mathf;
 
@@ -20,8 +21,13 @@ public class FilledCircle : MonoBehaviour
     Vector2 position;
     Vector2 velocity;
 
-    // Box bounds
-    public Vector2 boundsSize = new Vector2(5f, 5f);
+    // handling collision
+    // public Vector2 boundsSize = new Vector2(5f, 5f);
+    public float collisionDamping = 0.5f; // between 0 and 1
+    public float boundaryRadius = 5f;
+    // Drawing the box
+    private LineRenderer lineRenderer;
+    private LineRenderer circleLineRenderer;
 
     void Start()
     {
@@ -38,6 +44,34 @@ public class FilledCircle : MonoBehaviour
 
         // Initially create the filled circle
         DrawCircle(position, particleSize, radius);
+    
+        /*
+        // for the box
+        lineRenderer = gameObject.AddComponent<LineRenderer>();
+        lineRenderer.positionCount = 5;
+        lineRenderer.startWidth = 0.05f;
+        lineRenderer.endWidth = 0.05f;
+        lineRenderer.loop = true;
+        lineRenderer.useWorldSpace = true;
+        lineRenderer.material = new Material(Shader.Find("Sprites/Default"));
+        lineRenderer.startColor = Color.red;
+        lineRenderer.endColor = Color.red;
+
+        DrawBox();
+        */
+
+        circleLineRenderer = gameObject.AddComponent<LineRenderer>();
+        circleLineRenderer.startWidth = 0.05f;
+        circleLineRenderer.endWidth = 0.05f;
+        circleLineRenderer.useWorldSpace = false; 
+        circleLineRenderer.positionCount = segments + 1; 
+        circleLineRenderer.loop = true;
+        circleLineRenderer.startColor = Color.red; 
+        circleLineRenderer.endColor = Color.red;
+
+        // Draw the circular boundary
+        DrawBoundaryCircle(Vector2.zero, boundaryRadius);
+
     }
 
 
@@ -92,18 +126,71 @@ public class FilledCircle : MonoBehaviour
         meshFilter.mesh = mesh;
     }
 
+    /*
     void ResolveCollisions()
     {
         Vector2 halfBoundsSize = boundsSize / 2 - Vector2.one * particleSize;
         if (Abs(position.x) > halfBoundsSize.x)
         {
             position.x = halfBoundsSize.x * Sign(position.x);
-            velocity.x = -1;
+            velocity.x = -1 * collisionDamping;
         }
         if (Abs(position.y) > halfBoundsSize.y)
         {
             position.y = halfBoundsSize.y * Sign(position.y);
-            velocity.y *= -1;
+            velocity.y *= -1 * collisionDamping;
         }
+    }
+    */
+    void ResolveCollisions()
+    {
+        float distanceFromCenter = Vector2.Distance(position, Vector2.zero);
+
+        // Check if the circle is outside the boundary
+        if (distanceFromCenter + particleSize > boundaryRadius)
+        {
+            // Calculate the direction to the center
+            Vector2 directionToCenter = (position - Vector2.zero).normalized;
+
+            // Reflect the velocity vector off the boundary
+            velocity = Vector2.Reflect(velocity, directionToCenter) * collisionDamping;
+
+            // Adjust position to push it slightly inside the boundary
+            float overlap = (distanceFromCenter + particleSize) - boundaryRadius;
+            position -= directionToCenter * overlap; // Move it just back inside
+        }
+    }
+
+    /*
+    void DrawBox()
+    {
+        Vector3[] corners = new Vector3[5];
+        float halfWidth = boundsSize.x / 2;
+        float halfHeight = boundsSize.y / 2;
+
+        corners[0] = new Vector3(-halfWidth, -halfHeight, 0);
+        corners[1] = new Vector3(-halfWidth, halfHeight, 0);
+        corners[2] = new Vector3(halfWidth, halfHeight, 0);
+        corners[3] = new Vector3(halfWidth, -halfHeight, 0);
+        corners[4] = corners[0];
+
+        lineRenderer.SetPositions(corners);
+
+    }
+    */
+    void DrawBoundaryCircle(Vector2 center, float radius)
+    {
+        float angle = 2 * PI / segments;
+        Vector3[] points = new Vector3[segments + 1];
+
+        for (int i = 0; i <= segments; i++)
+        {
+            float x = Cos(i * angle) * radius;
+            float y = Sin(i * angle) * radius;
+            points[i] = new Vector3(x + center.x, y + center.y, 0);
+        }
+
+        // Set positions for the LineRenderer
+        circleLineRenderer.SetPositions(points);
     }
 }

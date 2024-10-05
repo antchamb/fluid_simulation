@@ -248,7 +248,8 @@ MonoBehaviour:
   color: {r: 0.49803925, g: 0.49803925, b: 0.49803925, a: 1}
   gravity: 9.8
   particleSize: 1
-  boundsSize: {x: 5, y: 5}
+  collisionDamping: 0.74
+  boundaryRadius: 5
 --- !u!4 &1059875353
 Transform:
   m_ObjectHideFlags: 0
